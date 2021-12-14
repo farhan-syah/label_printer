@@ -1,11 +1,12 @@
 class BluetoothDevice {
-  String? address;
-  BluetoothDevice({this.address});
+  final String address;
+  final String name;
+  BluetoothDevice({required this.name, required this.address});
 
   factory BluetoothDevice.fromJson(Map<String, dynamic> json) {
-    return BluetoothDevice(address: json['address'] as String);
+    return BluetoothDevice(name: json['name'], address: json['address']);
   }
   Map<String, dynamic> toJson() {
-    return {};
+    return {'address': address};
   }
 }

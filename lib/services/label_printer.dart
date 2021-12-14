@@ -61,7 +61,7 @@ class LabelPrinter {
       final List _result = List.from(await _channel.invokeMethod('startScan'));
 
       for (var e in _result) {
-        print(e);
+        // print(e);
         if (e['address'] != null) {
           _scanResults.value
               .add(BluetoothDevice.fromJson(Map<String, dynamic>.from(e)));
@@ -86,5 +86,19 @@ class LabelPrinter {
   Future stopScan() async {
     await _channel.invokeMethod('stopScan');
     _isScanning.add(false);
+  }
+
+  Future<void> connect(BluetoothDevice device) async {
+    try {
+      final result = await _channel.invokeMethod('connect', device.toJson());
+      print(result.toString());
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<bool> isConnected(BluetoothDevice device) async {
+    bool result = await _channel.invokeMethod('isConnected', device.toJson());
+    return result;
   }
 }

@@ -6,13 +6,13 @@ import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothSocket
 import android.bluetooth.le.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.Build
 import android.util.Log
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
@@ -28,10 +28,9 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import java.lang.Exception
 import java.lang.IllegalStateException
-import java.util.ArrayList
-import java.util.HashMap
+import java.util.*
+import kotlin.Exception
 
 
 /** LabelPrinterPlugin */
@@ -46,9 +45,11 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
 
+    private var _socket: BluetoothSocket? = null;
+    private var _device: BluetoothDevice? = null;
+    private var _isConnected: Boolean = false;
+
     private var activity: Activity? = null
-    private var pendingCall: MethodCall? = null
-    private var pendingResult: Result? = null
 
 
 
@@ -85,9 +86,8 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                             arrayOf<String>(Manifest.permission.ACCESS_COARSE_LOCATION),
                             MY_PERMISSIONS_REQUEST_LOCATION
                         )
-                        pendingCall = call
-                        pendingResult = result
                     }
+
 
                 }
                 getDevices(result)
@@ -95,6 +95,12 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             }
             "stopScan" -> {
 
+            }
+            "connect" -> {
+                connect(result, call.arguments())
+            }
+            "isConnected" -> {
+                isConnected(result, call.arguments())
             }
             else -> {
                 result.notImplemented()
@@ -107,7 +113,7 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
             private var sink: EventSink? = null
 
-            private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+            private val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
 
 
                 override fun onReceive(context: Context, intent: Intent) {
@@ -135,13 +141,13 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
                 filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
                 if (activity != null)
-                    activity!!.registerReceiver(mReceiver, filter)
+                    activity!!.registerReceiver(broadcastReceiver, filter)
             }
 
             override fun onCancel(o: Any?) {
                 sink = null
                 if (activity != null)
-                    activity!!.unregisterReceiver(mReceiver)
+                    activity!!.unregisterReceiver(broadcastReceiver)
             }
         }
 
@@ -168,9 +174,56 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             ret["type"] = device.type
             devices.add(ret)
         }
-        Log.d("getDevices", devices.toString())
+//        Log.d("getDevices", devices.toString())
         result.success(devices)
     }
+
+
+
+    private fun connect(result: Result, args: Map<String, Any?>) {
+        try {
+
+            if(args["address"] == null) throw Exception("Address is null")
+
+            val device = bluetoothAdapter.getRemoteDevice(args["address"] as String)
+            if(_device?.address != device.address) _device = device
+
+            if(_socket?.remoteDevice?.address != _device?.address)
+            _socket = device!!.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+
+
+            println("isConnected : $_isConnected")
+            println("isSocketConnected : ${_socket!!.isConnected}")
+            if(!_isConnected || !_socket!!.isConnected) {
+                _socket!!.connect()
+                _isConnected = true
+            }
+
+            result.success("Connection Successful")
+        }catch (e: Exception){
+            result.error("Connect Error", e.message, null)
+        }
+    }
+
+    private fun isConnected(result: Result, args: Map<String, Any?>) {
+        try {
+           result.success(_isConnected && _socket?.isConnected == true)
+        }catch (e: Exception){
+            result.error("Connect Error", e.message, null)
+        }
+    }
+
+//    private fun disconnect(): Boolean {
+//        if (DeviceConnFactoryManager.getDeviceConnFactoryManagers()
+//                .get(id) != null && DeviceConnFactoryManager.getDeviceConnFactoryManagers()
+//                .get(id).mPort != null
+//        ) {
+//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).reader.cancel()
+//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).mPort.closePort()
+//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).mPort = null
+//        }
+//        return true
+//    }
 
     private fun startScan(call: MethodCall, result: Result) {
         try {

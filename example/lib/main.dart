@@ -71,15 +71,41 @@ class _MyAppState extends State<MyApp> {
               if (snapshot.hasData) {
                 return Column(
                   children: [
-                    ...List.generate(
-                        snapshot.data!.length,
-                        (index) =>
-                            Text(snapshot.data![index].address.toString()))
+                    ...List.generate(snapshot.data!.length, (index) {
+                      BluetoothDevice device = snapshot.data![index];
+                      return BluetoothDeviceContainer(device: device);
+                    })
                   ],
                 );
-              } else
+              } else {
                 return Container();
+              }
             }),
+      ),
+    );
+  }
+}
+
+class BluetoothDeviceContainer extends StatelessWidget {
+  final BluetoothDevice device;
+  BluetoothDeviceContainer({Key? key, required this.device}) : super(key: key);
+  final LabelPrinter labelPrinter = LabelPrinter.instance;
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        await labelPrinter.connect(device);
+        print(await labelPrinter.isConnected(device));
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(device.name.toString()),
+            Text(device.address.toString()),
+          ],
+        ),
       ),
     );
   }
