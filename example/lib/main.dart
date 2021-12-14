@@ -26,27 +26,27 @@ class _MyAppState extends State<MyApp> {
   }
 
   initBluetooth() {
-    labelPrinter.startScan();
+    labelPrinter.startScan(timeout: const Duration(seconds: 2));
 
     labelPrinter.state.listen((state) {
       print('cur device status: $state');
 
-      // switch (state) {
-      //   case BluetoothManager.CONNECTED:
-      //     setState(() {
-      //       _connected = true;
-      //       tips = 'connect success';
-      //     });
-      //     break;
-      //   case BluetoothManager.DISCONNECTED:
-      //     setState(() {
-      //       _connected = false;
-      //       tips = 'disconnect success';
-      //     });
-      //     break;
-      //   default:
-      //     break;
-      // }
+      //   switch (state) {
+      //     case BluetoothManager.CONNECTED:
+      //       setState(() {
+      //         _connected = true;
+      //         tips = 'connect success';
+      //       });
+      //       break;
+      //     case BluetoothManager.DISCONNECTED:
+      //       setState(() {
+      //         _connected = false;
+      //         tips = 'disconnect success';
+      //       });
+      //       break;
+      //     default:
+      //       break;
+      //   // }
     });
   }
 
@@ -56,8 +56,30 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Plugin example app'),
+          actions: [
+            InkWell(
+              onTap: () {
+                labelPrinter.startScan();
+              },
+              child: const Icon(Icons.refresh),
+            )
+          ],
         ),
-        body: Center(),
+        body: StreamBuilder<List<BluetoothDevice>>(
+            stream: labelPrinter.scanResults,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    ...List.generate(
+                        snapshot.data!.length,
+                        (index) =>
+                            Text(snapshot.data![index].address.toString()))
+                  ],
+                );
+              } else
+                return Container();
+            }),
       ),
     );
   }
