@@ -15,9 +15,10 @@ class LabelPrinter {
   }
 
   LabelPrinter._() {
-    _channel.setMethodCallHandler((MethodCall call) {
+    _channel.setMethodCallHandler((MethodCall call) async {
+      // print('Call Method');
+      // print(call.method);
       _methodStreamController.add(call);
-      return Future(() => null);
     });
   }
 
@@ -26,14 +27,18 @@ class LabelPrinter {
   static LabelPrinter get instance => _instance;
 
   final BehaviorSubject<bool> _isScanning = BehaviorSubject.seeded(false);
+
+  Stream<bool> get isScanning => _isScanning.stream;
+
   final BehaviorSubject<List<BluetoothDevice>> _scanResults =
       BehaviorSubject.seeded(<BluetoothDevice>[]);
-  Stream<bool> get isScanning => _isScanning.stream;
-  final PublishSubject _stopScanPill = PublishSubject();
+  Stream<List<BluetoothDevice>> get scanResults => _scanResults.stream;
 
   Stream<MethodCall> get _methodStream => _methodStreamController.stream;
   final StreamController<MethodCall> _methodStreamController =
       StreamController.broadcast();
+
+  List<BluetoothDevice> devices = [];
 
   Stream<int?> get state async* {
     yield await _channel.invokeMethod('state').then((s) => s);
@@ -41,70 +46,59 @@ class LabelPrinter {
     yield* _stateChannel.receiveBroadcastStream().map((s) => s);
   }
 
-  Stream<BluetoothDevice> scan({
+  Future<void> scan({
     Duration? timeout,
-  }) async* {
+  }) async {
     if (_isScanning.value == true) {
-      throw Exception('Another scan is already in progress.');
+      stopScan();
     }
 
-    // Emit to isScanning
     _isScanning.add(true);
 
-    final killStreams = <Stream>[];
-    killStreams.add(_stopScanPill);
-    if (timeout != null) {
-      killStreams.add(Rx.timer(null, timeout));
-    }
-
-    // Clear scan results list
     _scanResults.add(<BluetoothDevice>[]);
 
     try {
-      await _channel.invokeMethod('startScan');
+      final List _result = List.from(await _channel.invokeMethod('startScan'));
+
+      for (var e in _result) {
+        // print(e);
+        if (e['address'] != null) {
+          _scanResults.value
+              .add(BluetoothDevice.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
     } catch (e) {
       print('Error starting scan.');
-      _stopScanPill.add(null);
       _isScanning.add(false);
       rethrow;
     }
 
-    yield* LabelPrinter.instance._methodStream
-        .where((m) => m.method == "ScanResult")
-        .map((m) => m.arguments)
-        .takeUntil(Rx.merge(killStreams))
-        .doOnDone(stopScan)
-        .map((map) {
-      final device = BluetoothDevice.fromJson(Map<String, dynamic>.from(map));
-      final List<BluetoothDevice>? list = _scanResults.value;
-      int newIndex = -1;
-      list!.asMap().forEach((index, e) {
-        if (e.address == device.address) {
-          newIndex = index;
-        }
-      });
-
-      if (newIndex != -1) {
-        list[newIndex] = device;
-      } else {
-        list.add(device);
-      }
-      _scanResults.add(list);
-      return device;
-    });
+    return Future.delayed(timeout ?? const Duration(seconds: 2));
   }
 
   Future<List<BluetoothDevice>> startScan({
     Duration? timeout,
   }) async {
-    await scan(timeout: timeout).drain();
+    await scan(timeout: timeout);
     return _scanResults.value;
   }
 
-  /// Stops a scan for Bluetooth Low Energy devices
   Future stopScan() async {
     await _channel.invokeMethod('stopScan');
-    _stopScanPill.add(null);
     _isScanning.add(false);
+  }
+
+  Future<void> connect(BluetoothDevice device) async {
+    try {
+      final result = await _channel.invokeMethod('connect', device.toJson());
+      print(result.toString());
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<bool> isConnected(BluetoothDevice device) async {
+    bool result = await _channel.invokeMethod('isConnected', device.toJson());
+    return result;
   }
 }
