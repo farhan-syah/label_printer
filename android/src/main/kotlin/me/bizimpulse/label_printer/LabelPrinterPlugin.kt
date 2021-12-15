@@ -45,10 +45,9 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
 
-    private var _socket: BluetoothSocket? = null;
-    private var _device: BluetoothDevice? = null;
-    private var _isConnected: Boolean = false;
-
+    private var _socket: BluetoothSocket? = null
+    private var _device: BluetoothDevice? = null
+    private var _isConnecting: Boolean = false
     private var activity: Activity? = null
 
 
@@ -192,22 +191,24 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             _socket = device!!.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
 
 
-            println("isConnected : $_isConnected")
+            println("isConnecting : $_isConnecting")
             println("isSocketConnected : ${_socket!!.isConnected}")
-            if(!_isConnected || !_socket!!.isConnected) {
+            if(!_isConnecting && !_socket!!.isConnected) {
+                _isConnecting = true
                 _socket!!.connect()
-                _isConnected = true
+                _isConnecting = false
             }
 
             result.success("Connection Successful")
         }catch (e: Exception){
+            _isConnecting = false
             result.error("Connect Error", e.message, null)
         }
     }
 
     private fun isConnected(result: Result, args: Map<String, Any?>) {
         try {
-           result.success(_isConnected && _socket?.isConnected == true)
+           result.success(_socket?.isConnected == true)
         }catch (e: Exception){
             result.error("Connect Error", e.message, null)
         }
