@@ -173,11 +173,8 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             ret["type"] = device.type
             devices.add(ret)
         }
-//        Log.d("getDevices", devices.toString())
         result.success(devices)
     }
-
-
 
     private fun connect(result: Result, args: Map<String, Any?>) {
         try {
@@ -214,68 +211,6 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         }
     }
 
-//    private fun disconnect(): Boolean {
-//        if (DeviceConnFactoryManager.getDeviceConnFactoryManagers()
-//                .get(id) != null && DeviceConnFactoryManager.getDeviceConnFactoryManagers()
-//                .get(id).mPort != null
-//        ) {
-//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).reader.cancel()
-//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).mPort.closePort()
-//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).mPort = null
-//        }
-//        return true
-//    }
-
-    private fun startScan(call: MethodCall, result: Result) {
-        try {
-            startScan()
-            result.success(null)
-        } catch (e: Exception) {
-            result.error("startScan", e.message, null)
-        }
-    }
-
-
-    @Throws(IllegalStateException::class)
-    private fun startScan() {
-
-
-        val scanner: BluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
-            ?: throw IllegalStateException("bluetoothAdapter.bluetoothLeScanner is null. Is the Adapter on?")
-
-        // 0:lowPower 1:balanced 2:lowLatency -1:opportunistic
-        val settings : ScanSettings =
-            ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build()
-        Log.d("183", settings.toString())
-        val filters = listOf<ScanFilter>()
-        scanner.startScan(filters, settings, scanCallback)
-    }
-
-
-
-    private val scanCallback: ScanCallback = object : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            Log.d("scanCallback", result.toString())
-            super.onScanResult(callbackType, result)
-            if(result?.device !=null){
-                val device = result.device
-                Log.d("scanCallback", device.toString())
-                if (device != null && device.name != null) {
-                    invokeMethodUIThread("ScanResult", device)
-                }
-            }
-        }
-
-//
-    }
-
-    private fun invokeMethodUIThread(name: String, device: BluetoothDevice) {
-        val ret: MutableMap<String, Any> = HashMap()
-        ret["address"] = device.address
-        ret["name"] = device.name
-        ret["type"] = device.type
-        activity!!.runOnUiThread { channel.invokeMethod(name, ret) }
-    }
 
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
