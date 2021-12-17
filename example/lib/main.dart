@@ -95,7 +95,10 @@ class BluetoothDeviceContainer extends StatelessWidget {
     return InkWell(
       onTap: () async {
         await labelPrinter.connect(device);
-        print(await labelPrinter.isConnected(device));
+        bool connected = await labelPrinter.isConnected(device);
+        if (connected) {
+          await labelPrinter.printDocument();
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(10),

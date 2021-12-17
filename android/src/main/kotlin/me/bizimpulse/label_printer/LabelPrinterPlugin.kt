@@ -28,9 +28,10 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import java.lang.IllegalStateException
 import java.util.*
 import kotlin.Exception
+import net.posprinter.*
+import net.posprinter.service.PosprinterService
 
 
 /** LabelPrinterPlugin */
@@ -44,6 +45,8 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private lateinit var stateChannel: EventChannel
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
+
+    private var posprinterService: PosprinterService = PosprinterService();
 
     private var _socket: BluetoothSocket? = null
     private var _device: BluetoothDevice? = null
@@ -64,6 +67,7 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         bluetoothManager =
             flutterPluginBinding.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
+
 
     }
 
@@ -100,6 +104,9 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             }
             "isConnected" -> {
                 isConnected(result, call.arguments())
+            }
+            "print" -> {
+                print()
             }
             else -> {
                 result.notImplemented()
@@ -208,6 +215,23 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
            result.success(_socket?.isConnected == true)
         }catch (e: Exception){
             result.error("Connect Error", e.message, null)
+        }
+    }
+
+
+    private fun print() {
+        try {
+            if(_socket!=null){
+                val bluetoothPrintService: BluetoothPrintService = BluetoothPrintService(_socket!!)
+                bluetoothPrintService.printText("Test")
+            }
+
+
+//            bluetoothPrintService.connectWithBluetooth(_device!!.address)
+//            printService.printText("Test");
+//            posprinterService.MyBinder().writeDataByYouself();
+        }catch (e: Exception){
+            println(e.toString())
         }
     }
 

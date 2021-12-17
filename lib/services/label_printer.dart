@@ -101,4 +101,8 @@ class LabelPrinter {
     bool result = await _channel.invokeMethod('isConnected', device.toJson());
     return result;
   }
+
+  printDocument() async {
+    await _channel.invokeMethod('print');
+  }
 }
