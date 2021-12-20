@@ -24,7 +24,6 @@ class _MyAppState extends State<MyApp> {
 
   initBluetooth() {
     labelPrinter.startScan(timeout: const Duration(seconds: 2));
-
     labelPrinter.state.listen((state) {
       print('cur device status: $state');
     });

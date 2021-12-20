@@ -35,10 +35,6 @@ import net.posprinter.service.PosprinterService
 /** LabelPrinterPlugin */
 @RequiresApi(23)
 class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
-    /// The MethodChannel that will the communication between Flutter and native Android
-    ///
-    /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-    /// when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
     private lateinit var stateChannel: EventChannel
     private lateinit var bluetoothManager: BluetoothManager
@@ -48,7 +44,6 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private var _device: BluetoothDevice? = null
     private var _isConnecting: Boolean = false
     private var activity: Activity? = null
-
 
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -124,12 +119,10 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                         "stateStreamHandler, current action: $action"
                     )
                     if (BluetoothAdapter.ACTION_STATE_CHANGED == action) {
-//                        threadPool = null
                         sink!!.success(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1))
                     } else if (BluetoothDevice.ACTION_ACL_CONNECTED == action) {
                         sink!!.success(1)
                     } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED == action) {
-//                        threadPool = null
                         sink!!.success(0)
                     }
                 }
@@ -181,25 +174,23 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private fun connect(result: Result, args: Map<String, Any?>) {
         try {
 
-            if(args["address"] == null) throw Exception("Address is null")
+            if (args["address"] == null) throw Exception("Address is null")
 
             val device = bluetoothAdapter.getRemoteDevice(args["address"] as String)
-            if(_device?.address != device.address) _device = device
+            if (_device?.address != device.address) _device = device
 
-            if(_socket?.remoteDevice?.address != _device?.address)
-            _socket = device!!.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+            if (_socket?.remoteDevice?.address != _device?.address)
+                _socket =
+                    device!!.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
 
-
-            println("isConnecting : $_isConnecting")
-            println("isSocketConnected : ${_socket!!.isConnected}")
-            if(!_isConnecting && !_socket!!.isConnected) {
+            if (!_isConnecting && !_socket!!.isConnected) {
                 _isConnecting = true
                 _socket!!.connect()
                 _isConnecting = false
             }
 
             result.success("Connection Successful")
-        }catch (e: Exception){
+        } catch (e: Exception) {
             _isConnecting = false
             result.error("Connect Error", e.message, null)
         }
@@ -207,8 +198,8 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     private fun isConnected(result: Result, args: Map<String, Any?>) {
         try {
-           result.success(_socket?.isConnected == true)
-        }catch (e: Exception){
+            result.success(_socket?.isConnected == true)
+        } catch (e: Exception) {
             result.error("Connect Error", e.message, null)
         }
     }
@@ -216,21 +207,16 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     private fun print(result: Result, args: Map<String, Any?>) {
         try {
-            if(_socket!=null){
+            if (_socket != null) {
                 val bluetoothPrintService: BluetoothPrintService = BluetoothPrintService(_socket!!)
                 bluetoothPrintService.print(args)
             }
 
             result.success("Print is Successful")
-//            bluetoothPrintService.connectWithBluetooth(_device!!.address)
-//            printService.printText("Test");
-//            posprinterService.MyBinder().writeDataByYouself();
-        }catch (e: Exception){
-//            println(e.toString())
+        } catch (e: Exception) {
             result.error("Printing Error", e.message, null)
         }
     }
-
 
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
