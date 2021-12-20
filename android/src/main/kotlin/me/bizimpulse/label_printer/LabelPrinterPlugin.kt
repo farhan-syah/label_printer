@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
-import android.bluetooth.le.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -30,7 +29,6 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.util.*
 import kotlin.Exception
-import net.posprinter.*
 import net.posprinter.service.PosprinterService
 
 
@@ -106,7 +104,7 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 isConnected(result, call.arguments())
             }
             "print" -> {
-                print()
+                print(result, call.arguments())
             }
             else -> {
                 result.notImplemented()
@@ -219,19 +217,20 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     }
 
 
-    private fun print() {
+    private fun print(result: Result, args: Map<String, Any?>) {
         try {
             if(_socket!=null){
                 val bluetoothPrintService: BluetoothPrintService = BluetoothPrintService(_socket!!)
-                bluetoothPrintService.printText("Test")
+                bluetoothPrintService.print(args)
             }
 
-
+            result.success("Print is Successful")
 //            bluetoothPrintService.connectWithBluetooth(_device!!.address)
 //            printService.printText("Test");
 //            posprinterService.MyBinder().writeDataByYouself();
         }catch (e: Exception){
-            println(e.toString())
+//            println(e.toString())
+            result.error("Printing Error", e.message, null)
         }
     }
 

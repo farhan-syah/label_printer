@@ -103,6 +103,6 @@ class LabelPrinter {
   }
 
   printDocument() async {
-    await _channel.invokeMethod('print');
+    await _channel.invokeMethod('print', {});
   }
 }
