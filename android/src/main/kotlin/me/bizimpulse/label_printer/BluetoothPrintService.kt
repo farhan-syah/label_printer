@@ -22,8 +22,29 @@ class BluetoothPrintService() {
         val thread = Thread {
             try {
                 println(data)
-                outputStream.write(DataForSendToPrinterTSC.sizeBymm(50.0, 30.0))
+                outputStream.write(DataForSendToPrinterTSC.sizeBymm(data["width"] as Double, data["height"] as Double))
                 outputStream.write(DataForSendToPrinterTSC.cls())
+
+                val content =  data["content"] as List<*>
+
+                content.forEach{
+                    val c = it as Map<*, *>
+                    if(c["type"]=="barcode") {
+                        outputStream.write(
+                            DataForSendToPrinterTSC.barCode(
+                                c["x"] as Int,
+                                c["y"] as Int,
+                                c["y"] as String,
+                                c["height"] as Int,
+                                c["human"] as Int,
+                                c["rotation"] as Int,
+                                c["narrow"] as Int,
+                                c["wide"] as Int,
+                                c["content"] as String
+                            )
+                        )
+                    }
+                }
 //                outputStream.write(
 //                    DataForSendToPrinterTSC.barCode(
 //                        60,
@@ -46,7 +67,7 @@ class BluetoothPrintService() {
 //                        BitmapToByteData.BmpType.Dithering
 //                    )
 //                )
-                outputStream.write(DataForSendToPrinterTSC.print(1))
+                outputStream.write(DataForSendToPrinterTSC.print(data["count"] as Int))
                 println("Printing is done")
             }catch (e:Exception){
                 println(e)

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:label_printer/model/tsc.dart';
 import 'package:rxdart/rxdart.dart';
 
 import '../model/bluetooth_device.dart';
@@ -16,8 +17,6 @@ class LabelPrinter {
 
   LabelPrinter._() {
     _channel.setMethodCallHandler((MethodCall call) async {
-      // print('Call Method');
-      // print(call.method);
       _methodStreamController.add(call);
     });
   }
@@ -61,14 +60,12 @@ class LabelPrinter {
       final List _result = List.from(await _channel.invokeMethod('startScan'));
 
       for (var e in _result) {
-        // print(e);
         if (e['address'] != null) {
           _scanResults.value
               .add(BluetoothDevice.fromJson(Map<String, dynamic>.from(e)));
         }
       }
     } catch (e) {
-      print('Error starting scan.');
       _isScanning.add(false);
       rethrow;
     }
@@ -89,20 +86,14 @@ class LabelPrinter {
   }
 
   Future<void> connect(BluetoothDevice device) async {
-    try {
-      final result = await _channel.invokeMethod('connect', device.toJson());
-      print(result.toString());
-    } catch (e) {
-      print(e);
-    }
+    await _channel.invokeMethod('connect', device.toJson());
   }
 
   Future<bool> isConnected(BluetoothDevice device) async {
-    bool result = await _channel.invokeMethod('isConnected', device.toJson());
-    return result;
+    return await _channel.invokeMethod('isConnected', device.toJson());
   }
 
-  printDocument() async {
-    await _channel.invokeMethod('print', {});
+  printTSC(TSC content) async {
+    await _channel.invokeMethod('print', content.toMap());
   }
 }

@@ -44,8 +44,6 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
 
-    private var posprinterService: PosprinterService = PosprinterService();
-
     private var _socket: BluetoothSocket? = null
     private var _device: BluetoothDevice? = null
     private var _isConnecting: Boolean = false
@@ -92,7 +90,6 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
                 }
                 getDevices(result)
-//                startScan(call, result)
             }
             "stopScan" -> {
 

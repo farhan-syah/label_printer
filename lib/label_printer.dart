@@ -7,4 +7,5 @@
 library label_printer;
 
 export './services/label_printer.dart';
+export './model/tsc.dart';
 export './model/bluetooth_device.dart';
