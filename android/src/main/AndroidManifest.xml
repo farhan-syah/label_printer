@@ -1,6 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="me.bizimpulse.label_printer">
-    <uses-permission android:name="android.permission.BLUETOOTH" />
+    package="me.bizimpulse.label_printer">
+
+    <application>
+        <service
+            android:name=".BluetoothPrintService"
+            android:enabled="true"
+            android:exported="true"></service>
+    </application>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED" />
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+
 </manifest>

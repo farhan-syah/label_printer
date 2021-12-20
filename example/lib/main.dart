@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/services.dart';
 import 'package:label_printer/label_printer.dart';
 
 void main() {
@@ -27,26 +24,8 @@ class _MyAppState extends State<MyApp> {
 
   initBluetooth() {
     labelPrinter.startScan(timeout: const Duration(seconds: 2));
-
     labelPrinter.state.listen((state) {
       print('cur device status: $state');
-
-      //   switch (state) {
-      //     case BluetoothManager.CONNECTED:
-      //       setState(() {
-      //         _connected = true;
-      //         tips = 'connect success';
-      //       });
-      //       break;
-      //     case BluetoothManager.DISCONNECTED:
-      //       setState(() {
-      //         _connected = false;
-      //         tips = 'disconnect success';
-      //       });
-      //       break;
-      //     default:
-      //       break;
-      //   // }
     });
   }
 
@@ -95,7 +74,13 @@ class BluetoothDeviceContainer extends StatelessWidget {
     return InkWell(
       onTap: () async {
         await labelPrinter.connect(device);
-        print(await labelPrinter.isConnected(device));
+        bool connected = await labelPrinter.isConnected(device);
+        if (connected) {
+          TSC tsc = TSC();
+          tsc.setSizeInMM(width: 50, height: 30);
+          tsc.print(2);
+          await labelPrinter.printTSC(tsc);
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(10),

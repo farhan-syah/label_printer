@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
-import android.bluetooth.le.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -28,18 +27,14 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import java.lang.IllegalStateException
 import java.util.*
 import kotlin.Exception
+import net.posprinter.service.PosprinterService
 
 
 /** LabelPrinterPlugin */
 @RequiresApi(23)
 class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
-    /// The MethodChannel that will the communication between Flutter and native Android
-    ///
-    /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-    /// when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
     private lateinit var stateChannel: EventChannel
     private lateinit var bluetoothManager: BluetoothManager
@@ -49,7 +44,6 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private var _device: BluetoothDevice? = null
     private var _isConnecting: Boolean = false
     private var activity: Activity? = null
-
 
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -64,6 +58,7 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         bluetoothManager =
             flutterPluginBinding.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
+
 
     }
 
@@ -90,7 +85,6 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
                 }
                 getDevices(result)
-//                startScan(call, result)
             }
             "stopScan" -> {
 
@@ -100,6 +94,9 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             }
             "isConnected" -> {
                 isConnected(result, call.arguments())
+            }
+            "print" -> {
+                print(result, call.arguments())
             }
             else -> {
                 result.notImplemented()
@@ -122,12 +119,10 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                         "stateStreamHandler, current action: $action"
                     )
                     if (BluetoothAdapter.ACTION_STATE_CHANGED == action) {
-//                        threadPool = null
                         sink!!.success(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1))
                     } else if (BluetoothDevice.ACTION_ACL_CONNECTED == action) {
                         sink!!.success(1)
                     } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED == action) {
-//                        threadPool = null
                         sink!!.success(0)
                     }
                 }
@@ -173,34 +168,29 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             ret["type"] = device.type
             devices.add(ret)
         }
-//        Log.d("getDevices", devices.toString())
         result.success(devices)
     }
-
-
 
     private fun connect(result: Result, args: Map<String, Any?>) {
         try {
 
-            if(args["address"] == null) throw Exception("Address is null")
+            if (args["address"] == null) throw Exception("Address is null")
 
             val device = bluetoothAdapter.getRemoteDevice(args["address"] as String)
-            if(_device?.address != device.address) _device = device
+            if (_device?.address != device.address) _device = device
 
-            if(_socket?.remoteDevice?.address != _device?.address)
-            _socket = device!!.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+            if (_socket?.remoteDevice?.address != _device?.address)
+                _socket =
+                    device!!.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
 
-
-            println("isConnecting : $_isConnecting")
-            println("isSocketConnected : ${_socket!!.isConnected}")
-            if(!_isConnecting && !_socket!!.isConnected) {
+            if (!_isConnecting && !_socket!!.isConnected) {
                 _isConnecting = true
                 _socket!!.connect()
                 _isConnecting = false
             }
 
             result.success("Connection Successful")
-        }catch (e: Exception){
+        } catch (e: Exception) {
             _isConnecting = false
             result.error("Connect Error", e.message, null)
         }
@@ -208,73 +198,24 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     private fun isConnected(result: Result, args: Map<String, Any?>) {
         try {
-           result.success(_socket?.isConnected == true)
-        }catch (e: Exception){
+            result.success(_socket?.isConnected == true)
+        } catch (e: Exception) {
             result.error("Connect Error", e.message, null)
         }
     }
 
-//    private fun disconnect(): Boolean {
-//        if (DeviceConnFactoryManager.getDeviceConnFactoryManagers()
-//                .get(id) != null && DeviceConnFactoryManager.getDeviceConnFactoryManagers()
-//                .get(id).mPort != null
-//        ) {
-//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).reader.cancel()
-//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).mPort.closePort()
-//            DeviceConnFactoryManager.getDeviceConnFactoryManagers().get(id).mPort = null
-//        }
-//        return true
-//    }
 
-    private fun startScan(call: MethodCall, result: Result) {
+    private fun print(result: Result, args: Map<String, Any?>) {
         try {
-            startScan()
-            result.success(null)
-        } catch (e: Exception) {
-            result.error("startScan", e.message, null)
-        }
-    }
-
-
-    @Throws(IllegalStateException::class)
-    private fun startScan() {
-
-
-        val scanner: BluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
-            ?: throw IllegalStateException("bluetoothAdapter.bluetoothLeScanner is null. Is the Adapter on?")
-
-        // 0:lowPower 1:balanced 2:lowLatency -1:opportunistic
-        val settings : ScanSettings =
-            ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build()
-        Log.d("183", settings.toString())
-        val filters = listOf<ScanFilter>()
-        scanner.startScan(filters, settings, scanCallback)
-    }
-
-
-
-    private val scanCallback: ScanCallback = object : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            Log.d("scanCallback", result.toString())
-            super.onScanResult(callbackType, result)
-            if(result?.device !=null){
-                val device = result.device
-                Log.d("scanCallback", device.toString())
-                if (device != null && device.name != null) {
-                    invokeMethodUIThread("ScanResult", device)
-                }
+            if (_socket != null) {
+                val bluetoothPrintService: BluetoothPrintService = BluetoothPrintService(_socket!!)
+                bluetoothPrintService.print(args)
             }
+
+            result.success("Print is Successful")
+        } catch (e: Exception) {
+            result.error("Printing Error", e.message, null)
         }
-
-//
-    }
-
-    private fun invokeMethodUIThread(name: String, device: BluetoothDevice) {
-        val ret: MutableMap<String, Any> = HashMap()
-        ret["address"] = device.address
-        ret["name"] = device.name
-        ret["type"] = device.type
-        activity!!.runOnUiThread { channel.invokeMethod(name, ret) }
     }
 
 
