@@ -1,6 +1,4 @@
 import 'dart:typed_data';
-
-import 'package:bitmap/bitmap.dart';
 import 'package:flutter/material.dart';
 import 'package:label_printer/label_printer.dart';
 

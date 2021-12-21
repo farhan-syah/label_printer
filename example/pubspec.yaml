@@ -26,8 +26,6 @@ dependencies:
     # the parent directory to use the current plugin's version.
     path: ../
 
-  bitmap: ^0.1.2
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
