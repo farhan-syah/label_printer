@@ -1,6 +1,4 @@
 import 'dart:typed_data';
-
-import 'package:bitmap/bitmap.dart';
 import 'package:flutter/foundation.dart';
 
 class TSC {
