@@ -94,7 +94,6 @@ class LabelPrinter {
   }
 
   printTSC(TSC content) async {
-    print(content.toMap());
     await _channel.invokeMethod('print', content.toMap());
   }
 }
