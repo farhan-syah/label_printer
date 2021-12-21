@@ -1,16 +1,12 @@
 package me.bizimpulse.label_printer
 
 import android.bluetooth.BluetoothSocket
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import net.posprinter.utils.BitmapToByteData
-import net.posprinter.utils.DataForSendToPrinterPos80
 import net.posprinter.utils.DataForSendToPrinterTSC
-import net.posprinter.utils.PosPrinterDev.*
 import java.io.OutputStream
 import java.lang.Exception
-import java.lang.Iterable
-import java.util.ArrayList
+
 
 class BluetoothPrintService() {
 
