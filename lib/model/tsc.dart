@@ -1,3 +1,8 @@
+import 'dart:typed_data';
+
+import 'package:bitmap/bitmap.dart';
+import 'package:flutter/foundation.dart';
+
 class TSC {
   TSC();
 
@@ -21,9 +26,8 @@ class TSC {
     gapHeight = height;
   }
 
-  addContent({required double width, required double height}) {
-    gapWidth = width;
-    gapHeight = height;
+  addContent(TSCContent content) {
+    this.content.add(content);
   }
 
   print([int count = 1]) {
@@ -53,11 +57,45 @@ class TSCContent {
   toMap() {}
 }
 
+class TSCText extends TSCContent {
+  final int x;
+  final int y;
+  final String fontType;
+  final int rotation;
+  final int xMultiplication;
+  final int yMultiplication;
+  final String content;
+
+  TSCText({
+    required this.x,
+    required this.y,
+    required this.content,
+    this.fontType = "1",
+    this.rotation = 0,
+    this.xMultiplication = 2,
+    this.yMultiplication = 2,
+  }) : super(contentType: ContentType.text);
+
+  @override
+  Map<String, dynamic> toMap() {
+    return {
+      "type": describeEnum(contentType),
+      "x": x,
+      "y": y,
+      "fontType": fontType,
+      "rotation": rotation,
+      "xMultiplication": xMultiplication,
+      "yMultiplication": yMultiplication,
+      "content": content,
+    };
+  }
+}
+
 class TSCBarcode extends TSCContent {
   final int x;
   final int y;
   final String codeType;
-  final int heigth;
+  final int height;
   final int human;
   final int rotation;
   final int narrow;
@@ -68,7 +106,7 @@ class TSCBarcode extends TSCContent {
     required this.x,
     required this.y,
     this.codeType = "128",
-    required this.heigth,
+    required this.height,
     this.human = 1,
     this.rotation = 0,
     this.narrow = 2,
@@ -79,11 +117,11 @@ class TSCBarcode extends TSCContent {
   @override
   Map<String, dynamic> toMap() {
     return {
-      "type": contentType,
+      "type": describeEnum(contentType),
       "x": x,
       "y": y,
       "codeType": codeType,
-      "height": heigth,
+      "height": height,
       "human": human,
       "rotation": rotation,
       "narrow": narrow,
@@ -93,4 +131,29 @@ class TSCBarcode extends TSCContent {
   }
 }
 
-enum ContentType { barcode, print }
+class TSCImage extends TSCContent {
+  final int x;
+  final int y;
+  final int mode;
+  final Uint8List image;
+
+  TSCImage({
+    required this.x,
+    required this.y,
+    this.mode = 0,
+    required this.image,
+  }) : super(contentType: ContentType.image);
+
+  @override
+  Map<String, dynamic> toMap() {
+    return {
+      "type": describeEnum(contentType),
+      "x": x,
+      "y": y,
+      "mode": mode,
+      "bitmap": image,
+    };
+  }
+}
+
+enum ContentType { text, barcode, image }

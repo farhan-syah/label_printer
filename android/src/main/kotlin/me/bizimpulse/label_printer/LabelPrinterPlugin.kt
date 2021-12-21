@@ -63,7 +63,6 @@ class LabelPrinterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
-        Log.d("onMethodCall", call.method.toString())
         when (call.method) {
             "state" -> {
                 state(result)

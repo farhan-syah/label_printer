@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:bitmap/bitmap.dart';
 import 'package:flutter/material.dart';
 import 'package:label_printer/label_printer.dart';
 
@@ -24,9 +27,9 @@ class _MyAppState extends State<MyApp> {
 
   initBluetooth() {
     labelPrinter.startScan(timeout: const Duration(seconds: 2));
-    labelPrinter.state.listen((state) {
-      print('cur device status: $state');
-    });
+    // labelPrinter.state.listen((state) {
+    //   print('cur device status: $state');
+    // });
   }
 
   @override
@@ -78,7 +81,99 @@ class BluetoothDeviceContainer extends StatelessWidget {
         if (connected) {
           TSC tsc = TSC();
           tsc.setSizeInMM(width: 50, height: 30);
-          tsc.print(2);
+          // tsc.addContent(
+          //     TSCBarcode(x: 100, y: 50, height: 100, content: '123456789'));
+
+          Uint8List data = Uint8List.fromList([
+            137,
+            80,
+            78,
+            71,
+            13,
+            10,
+            26,
+            10,
+            0,
+            0,
+            0,
+            13,
+            73,
+            72,
+            68,
+            82,
+            0,
+            0,
+            0,
+            5,
+            0,
+            0,
+            0,
+            5,
+            8,
+            6,
+            0,
+            0,
+            0,
+            141,
+            111,
+            38,
+            229,
+            0,
+            0,
+            0,
+            28,
+            73,
+            68,
+            65,
+            84,
+            8,
+            215,
+            99,
+            248,
+            255,
+            255,
+            63,
+            195,
+            127,
+            6,
+            32,
+            5,
+            195,
+            32,
+            18,
+            132,
+            208,
+            49,
+            241,
+            130,
+            88,
+            205,
+            4,
+            0,
+            14,
+            245,
+            53,
+            203,
+            209,
+            142,
+            14,
+            31,
+            0,
+            0,
+            0,
+            0,
+            73,
+            69,
+            78,
+            68,
+            174,
+            66,
+            96,
+            130
+          ]);
+          tsc.addContent(TSCImage(x: 50, y: 50, image: data));
+          tsc.addContent(TSCText(x: 50, y: 50, content: 'Test'));
+          tsc.print();
           await labelPrinter.printTSC(tsc);
         }
       },
