@@ -7,6 +7,9 @@ class BluetoothDevice {
     return BluetoothDevice(name: json['name'], address: json['address']);
   }
   Map<String, dynamic> toJson() {
-    return {'address': address};
+    return {
+      'name': name,
+      'address': address,
+    };
   }
 }
